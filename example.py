@@ -1,4 +1,4 @@
-from iotawatt import Iotawatt
+from iotawattpy import Iotawatt, Connection
 from aiohttp import ClientSession
 import logging
 import asyncio
