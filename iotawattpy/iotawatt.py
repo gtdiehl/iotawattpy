@@ -1,7 +1,7 @@
-from .sensorio import SensorIO
 import aiohttp
 import logging
 from .connection import Connection
+from .sensorio import SensorIO
 
 _LOGGER = logging.getLogger(__name__)
 
