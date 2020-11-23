@@ -11,4 +11,3 @@ def sensor():
 
 def test_get_name(sensor):
     assert sensor.getName() == "myname"
-
