@@ -7,6 +7,7 @@ LOOP = asyncio.get_event_loop()
 
 logging.basicConfig(level='DEBUG')
 
+
 class Tester:
 
     def __init__(self, host):
@@ -20,8 +21,9 @@ class Tester:
         await self.session.close()
 
         for i in range(len(a)):
-            logging.info("%s is consuming %s %s", 
-                a[i].getName(), a[i].getValue(), a[i].getUnit())
+            logging.info("%s is consuming %s %s",
+                         a[i].getName(), a[i].getValue(), a[i].getUnit())
+
 
 def main():
 
@@ -29,6 +31,7 @@ def main():
 
     test = Tester("10.0.20.202")
     LOOP.run_until_complete(test.run())
+
 
 if __name__ == "__main__":
     main()

@@ -5,8 +5,9 @@ from .sensorio import SensorIO
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class Iotawatt:
-    
+
     """Creates an Iotawatt object that represents the physical hardware"""
     """with sensors connected to it"""
     def __init__(self, name, ip, websession: aiohttp.ClientSession):
@@ -29,7 +30,8 @@ class Iotawatt:
     def _parseShowSeriesResponse(self, response):
         series = dict()
         for i in range(len(response["series"])):
-            series[response["series"][i]["name"]] = response["series"][i]["unit"]
+            series[response["series"][i]["name"]] = \
+                response["series"][i]["unit"]
         return series
 
     def _setSensors(self, series):
@@ -37,13 +39,14 @@ class Iotawatt:
             self._sensors.append(SensorIO(i, series[i]))
 
     async def _setValues(self):
-        values = self._parseSelectSeriesResponse(await self._getQuerySelectSeries())
+        values = self._parseSelectSeriesResponse(
+                await self._getQuerySelectSeries())
         for i in range(len(self._sensors)):
             self._sensors[i].setValue(values[i])
 
     def _parseSelectSeriesResponse(self, response):
         response = response.pop(0)
-        last_update = response.pop(0)
+        last_update = response.pop(0)  # noqa
         return response
 
     async def _getQuerySelectSeries(self):

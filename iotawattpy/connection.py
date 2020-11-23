@@ -1,7 +1,4 @@
-import asyncio
 import logging
-import pprint
-import time
 
 import aiohttp
 
@@ -9,6 +6,7 @@ _LOGGER = logging.getLogger(__name__)
 
 GET = "get"
 POST = "post"
+
 
 class Connection:
 
@@ -30,7 +28,8 @@ class Connection:
         return await self.__open(url)
 
     async def __open(
-        self, url, method=GET, headers=None, data=None, json_data=None, params=None, baseurl="", decode_json=True,
+        self, url, method=GET, headers=None, data=None,
+        json_data=None, params=None, baseurl="", decode_json=True,
     ):
 
         _LOGGER.debug("URL: %s", url)
@@ -41,7 +40,7 @@ class Connection:
             if decode_json:
                 return (await resp.json())
             return resp
-        except aiohttp.ClientResponseError as err:
+        except aiohttp.ClientResponseError:
             pass
-        except aiohttp.ClientConnectionError as err:
+        except aiohttp.ClientConnectionError:
             pass
