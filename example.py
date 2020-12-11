@@ -2,6 +2,7 @@ from iotawattpy.iotawatt import Iotawatt
 from aiohttp import ClientSession
 import logging
 import asyncio
+import time
 
 LOOP = asyncio.get_event_loop()
 
@@ -16,13 +17,11 @@ class Tester:
     async def run(self):
         self.session = ClientSession()
         self.iotawatt = Iotawatt("iotawatt", self._host, self.session)
-        await self.iotawatt.update()
-        a = self.iotawatt.getSensors()
-        await self.session.close()
-
-        for i in range(len(a)):
-            logging.info("%s is consuming %s %s",
-                         a[i].getName(), a[i].getValue(), a[i].getUnit())
+        while(True):
+            logging.info("=============================================")
+            await self.iotawatt.update()
+            logging.info("=============================================")
+            time.sleep(5)            
 
 
 def main():

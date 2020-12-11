@@ -37,10 +37,11 @@ class Connection:
             resp = await getattr(self._websession, method)(
                 url, headers=headers, params=params, data=data, json=json_data
             )
-            if decode_json:
-                return (await resp.json())
+            #TODO Commenting out this check as the IoTaWatt is returning 'text/json'and will have to wait until this is resolved
+            #if decode_json:
+            #    return (await resp.json())
             return resp
-        except aiohttp.ClientResponseError:
-            pass
-        except aiohttp.ClientConnectionError:
-            pass
+        except aiohttp.ClientResponseError as err:
+            logging.error("Err: %s", err)
+        except aiohttp.ClientConnectionError as err:
+            logging.error("Err: %s", err)
