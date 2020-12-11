@@ -1,11 +1,11 @@
 import pytest  # noqa: F401
 import context  # noqa
-from iotawattpy.sensorio import SensorIO  # noqa
+from iotawattpy.sensor import Sensor  # noqa
 
 
 @pytest.fixture(scope="session")
 def sensor():
-    sensor = SensorIO("myname", "")
+    sensor = Sensor("", "myname", "Input", "Watts", 102)
     return sensor
 
 
