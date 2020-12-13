@@ -2,8 +2,6 @@ import logging
 
 import aiohttp
 
-_LOGGER = logging.getLogger(__name__)
-
 GET = "get"
 POST = "post"
 
@@ -15,15 +13,6 @@ class Connection:
         self._series = []
         self._websession = websession
 
-    async def connect(self):
-        await self._refresh_series()
-        return self._series
-
-    async def _refresh_series(self):
-        url = "http://{}/query?show=series".format(self._host)
-        js_resp = await self.get(url)
-        self._series = js_resp["series"]
-
     async def get(self, url):
         return await self.__open(url)
 
@@ -32,7 +21,7 @@ class Connection:
         json_data=None, params=None, baseurl="", decode_json=True,
     ):
 
-        _LOGGER.debug("URL: %s", url)
+        logging.debug("URL: %s", url)
         try:
             resp = await getattr(self._websession, method)(
                 url, headers=headers, params=params, data=data, json=json_data

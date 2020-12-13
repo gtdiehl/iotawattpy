@@ -4,8 +4,6 @@ import json
 from .connection import Connection
 from .sensor import Sensor
 
-_LOGGER = logging.getLogger(__name__)
-
 
 class Iotawatt:
 
@@ -32,7 +30,6 @@ class Iotawatt:
     """Retrieves list of Inputs and Outputs and associated Status from the IoTaWatt"""
     async def _getInputsandOutputs(self):
         url = "http://{}/status?inputs=yes&outputs=yes".format(self._ip)
-        logging.debug("URL: %s", url)
         return await self._connection.get(url)
 
     async def _createSensors(self):
