@@ -1,5 +1,6 @@
-import pytest  # noqa: F401
 import context  # noqa
+import pytest  # noqa: F401
+
 from iotawattpy.sensor import Sensor  # noqa
 
 
