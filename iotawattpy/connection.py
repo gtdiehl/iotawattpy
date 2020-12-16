@@ -1,6 +1,6 @@
 import logging
 
-import aiohttp
+import httpx
 
 GET = "get"
 POST = "post"
@@ -8,29 +8,30 @@ POST = "post"
 
 class Connection:
 
-    def __init__(self, websession: aiohttp.ClientSession, host):
+    def __init__(self, websession: httpx.AsyncClient, host):
         self._host = host
         self._series = []
         self._websession = websession
 
-    async def get(self, url):
-        return await self.__open(url)
+    async def get(self, url, username=None, password=None):
+        return await self.__open(url, username=username, password=password)
 
     async def __open(
-        self, url, method=GET, headers=None, data=None,
-        json_data=None, params=None, baseurl="", decode_json=True,
+        self, url, method=GET, headers=None,
+        params=None, baseurl="", decode_json=True,
+        auth=None, username=None, password=None
     ):
+        if username is not None:
+            auth = httpx.DigestAuth(username, password)
 
         logging.debug("URL: %s", url)
         try:
             resp = await getattr(self._websession, method)(
-                url, headers=headers, params=params, data=data, json=json_data
+                url, headers=headers, params=params,auth=auth
             )
             #TODO Commenting out this check as the IoTaWatt is returning 'text/json'and will have to wait until this is resolved
             #if decode_json:
             #    return (await resp.json())
             return resp
-        except aiohttp.ClientResponseError as err:
-            logging.error("Err: %s", err)
-        except aiohttp.ClientConnectionError as err:
+        except httpx.HTTPError as err:
             logging.error("Err: %s", err)

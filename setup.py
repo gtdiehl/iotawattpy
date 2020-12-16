@@ -18,5 +18,8 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+        "httpx==0.16.1"
+    ],
     python_requires='>=3.8',
 )
