@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="iotawattpy",
-    version="0.0.2",
+    version="0.0.3",
     author="Greg Diehl",
     author_email="greg.diehl.gtd@gmail.com",
     description="Python library for the IoTaWatt Energy device",
