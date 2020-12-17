@@ -23,6 +23,7 @@ class Tester:
     async def run(self):
         self.session = AsyncClient()
         self.iotawatt = Iotawatt("iotawatt", self._ip_addr, self.session, self._username, self._password)
+        await self.iotawatt.connect()
         while(True):
             logging.info("=============================================")
             await self.iotawatt.update()

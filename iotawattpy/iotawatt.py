@@ -21,13 +21,20 @@ class Iotawatt:
         self._sensors = {}
         self._sensors['sensors'] = {}
 
+        self._macAddress = ""
+
     """If Authentication is enabled, test the connection"""
     async def connect(self):
-        if self._username is not None:
-            url = "http://{}/status?inputs=yes&outputs=yes".format(self._ip)
-            results = await self._connection.get(url, self._username, self._password)
-            logging.debug("Test: %s", results)
-        return results.status_code == httpx.codes.OK
+        url = "http://{}/status?wifi=yes".format(self._ip)
+        results = await self._connection.get(url, self._username, self._password)
+        try:
+            jsonResults = results.json()
+        except Exception:
+            return False
+
+        self._macAddress = jsonResults['wifi']['mac'].replace(':', '')
+        logging.debug("MAC: %s", self._macAddress)
+        return True
 
     """Returns an array of Sensor objects"""
     def getSensors(self):
@@ -76,6 +83,7 @@ class Iotawatt:
                 inputsensor.setName(query['series'][i]['name'])
                 inputsensor.setUnit(query['series'][i]['unit'])
                 inputsensor.setValue(values[0][i+1])
+                inputsensor.setSensorID(self._macAddress)
 
         for i in range(len(outputs)):
             logging.debug("Out: Name: %s - Value: %s %s", outputs[i]['name'], outputs[i]['units'], outputs[i]['value'])
@@ -86,6 +94,7 @@ class Iotawatt:
                 outputsensor = self._sensors['sensors'].get("output_" + str(outputs[i]['name']))
                 outputsensor.setUnit(outputs[i]['units'])
                 outputsensor.setValue(outputs[i]['value'])
+                outputsensor.setSensorID(self._macAddress)
 
     async def _getQueryShowSeries(self):
         url = "http://{}/query?show=series".format(self._ip)

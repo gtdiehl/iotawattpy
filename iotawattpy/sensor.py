@@ -11,11 +11,19 @@ class Sensor:
         self._unit = unit
         self._value = value
 
+        self._sensor_id = None
+
     def getChannel(self):
         return self._channel
 
     def setChannel(self, channel):
         self._channel = channel
+
+    def getSensorID(self):
+        return self._sensor_id
+
+    def setSensorID(self, hub_mac_address):
+        self._sensor_id = hub_mac_address + "_" + self._type + "_" + self._name
 
     def getName(self):
         return self._name
