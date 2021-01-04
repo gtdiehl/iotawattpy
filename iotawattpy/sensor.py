@@ -4,7 +4,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Sensor:
-    def __init__(self, channel, name, io_type, unit, value):
+    def __init__(self, channel, name, io_type, unit, value, mac_addr):
         self._channel = channel
         self._name = name
         self._type = io_type
@@ -12,6 +12,8 @@ class Sensor:
         self._value = value
 
         self._sensor_id = None
+
+        self.setSensorID(mac_addr)
 
     def getChannel(self):
         return self._channel

@@ -27,14 +27,22 @@ class Iotawatt:
     async def connect(self):
         url = "http://{}/status?wifi=yes".format(self._ip)
         results = await self._connection.get(url, self._username, self._password)
-        try:
-            jsonResults = results.json()
-        except Exception:
-            return False
+        if results.status_code == httpx.codes.OK:
+            try:
+                jsonResults = results.json()
+            except json.JSONDecodeError:
+                raise
 
-        self._macAddress = jsonResults['wifi']['mac'].replace(':', '')
-        logging.debug("MAC: %s", self._macAddress)
-        return True
+            try:
+                self._macAddress = jsonResults['wifi']['mac'].replace(':', '')
+                logging.debug("MAC: %s", self._macAddress)
+            except KeyError:
+                raise
+            return True
+        elif results.status_code == 401:
+            return False
+        else:
+            results.raise_for_status()
 
     """Returns an array of Sensor objects"""
     def getSensors(self):
@@ -52,6 +60,8 @@ class Iotawatt:
         return await self._connection.get(url, self._username, self._password)
 
     async def _createSensors(self):
+        self._sensors = {}
+        self._sensors['sensors'] = {}
         response = await self._getInputsandOutputs()
         results = response.text
         results = json.loads(results)
@@ -77,7 +87,7 @@ class Iotawatt:
             logging.debug("In: Channel: %s - Name: %s - Value: %s %s", inputs[i]['channel'], query['series'][i]['name'], values[0][i+1], query['series'][i]['unit'])
             
             if self._sensors['sensors'].get("input_" + str(inputs[i]['channel']), None) is None:
-                self._sensors['sensors']["input_" + str(inputs[i]['channel'])] = Sensor(inputs[i]['channel'], query['series'][i]['name'], "Input", query['series'][i]['unit'], values[0][i+1])
+                self._sensors['sensors']["input_" + str(inputs[i]['channel'])] = Sensor(inputs[i]['channel'], query['series'][i]['name'], "Input", query['series'][i]['unit'], values[0][i+1], self._macAddress)
             else:
                 inputsensor = self._sensors['sensors'].get("input_" + str(inputs[i]['channel']))
                 inputsensor.setName(query['series'][i]['name'])
@@ -89,7 +99,7 @@ class Iotawatt:
             logging.debug("Out: Name: %s - Value: %s %s", outputs[i]['name'], outputs[i]['units'], outputs[i]['value'])
 
             if self._sensors['sensors'].get("output_" + str(outputs[i]['name']), None) is None:
-                self._sensors['sensors']["output_" + str(outputs[i]['name'])] = Sensor("N/A", outputs[i]['name'], "Output", outputs[i]['units'], outputs[i]['value'])
+                self._sensors['sensors']["output_" + str(outputs[i]['name'])] = Sensor("N/A", outputs[i]['name'], "Output", outputs[i]['units'], outputs[i]['value'], self._macAddress)
             else:
                 outputsensor = self._sensors['sensors'].get("output_" + str(outputs[i]['name']))
                 outputsensor.setUnit(outputs[i]['units'])
