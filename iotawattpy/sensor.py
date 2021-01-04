@@ -10,8 +10,9 @@ class Sensor:
         self._type = io_type
         self._unit = unit
         self._value = value
-
         self._sensor_id = None
+
+        self.hub_mac_address = mac_addr
 
         self.setSensorID(mac_addr)
 
