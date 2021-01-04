@@ -6,7 +6,7 @@ from iotawattpy.sensor import Sensor  # noqa
 
 @pytest.fixture(scope="session")
 def sensor():
-    sensor = Sensor("", "myname", "Input", "Watts", 102)
+    sensor = Sensor("", "myname", "Input", "Watts", 102, "deadbeef")
     return sensor
 
 
