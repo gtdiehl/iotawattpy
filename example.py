@@ -4,9 +4,9 @@ import logging
 import sys
 import time
 
-from httpx import AsyncClient
-
 from iotawattpy.iotawatt import Iotawatt
+from httpx import AsyncClient
+import httpx
 
 LOOP = asyncio.get_event_loop()
 
@@ -23,7 +23,13 @@ class Tester:
     async def run(self):
         self.session = AsyncClient()
         self.iotawatt = Iotawatt("iotawatt", self._ip_addr, self.session, self._username, self._password)
-        await self.iotawatt.connect()
+        try:
+            await self.iotawatt.connect()
+        except httpx.HTTPStatusError as err:
+            logging.error("%s", err)
+            await self.session.aclose()
+            return
+
         while(True):
             logging.info("=============================================")
             await self.iotawatt.update()
