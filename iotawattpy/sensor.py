@@ -1,6 +1,6 @@
 import logging
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class Sensor:
@@ -33,7 +33,7 @@ class Sensor:
 
     def setName(self, name):
         self._name = name
-        
+
     def getType(self):
         return self._type
 
