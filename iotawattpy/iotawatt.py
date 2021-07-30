@@ -50,8 +50,8 @@ class Iotawatt:
         return self._sensors
 
     """Retrieves sensor data and updates the Sensor objects"""
-    async def update(self):
-        await self._createSensors()
+    async def update(self, timespan=30):
+        await self._createSensors(timespan)
 
     """Private helper functions"""
 
@@ -60,7 +60,7 @@ class Iotawatt:
         url = "http://{}/status?inputs=yes&outputs=yes".format(self._ip)
         return await self._connection.get(url, self._username, self._password)
 
-    async def _createSensors(self):
+    async def _createSensors(self, timespan):
         sensors = self._sensors['sensors']
 
         response = await self._getInputsandOutputs()
@@ -79,9 +79,8 @@ class Iotawatt:
         for s in range(len(query['series'])):
             sensors_query_names.append(query['series'][s]['name'])
         _LOGGER.debug("Sen: %s", sensors_query_names)
-        values = await self._getQuerySelectSeries(sensors_query_names)
-        values = values.text
-        values = json.loads(values)
+        response = await self._getQuerySelectSeriesCurrent(sensors_query_names, timespan)
+        values = json.loads(response.text)
         _LOGGER.debug("Val: %s", values)
 
         for i in range(len(inputs)):
@@ -119,10 +118,13 @@ class Iotawatt:
         _LOGGER.debug("URL: %s", url)
         return await self._connection.get(url, self._username, self._password)
 
-    async def _getQuerySelectSeries(self, sensor_names):
-        url = "http://{}/query?select=[time.iso,".format(self._ip)
-        delim = ","
-        strSeries = delim.join(sensor_names)
-        url = url + strSeries + "]&begin=s-5s&end=s&group=5s"
-        return await self._connection.get(url, self._username, self._password)
+    async def _getQuerySelectSeriesCurrent(self, sensor_names, timespan):
+        """Get current values using Query API.
 
+        @param: sensor_names List of sensors
+        @param: timespan Interval in seconds. Returns an average over the provided period
+        """
+        url = "http://{}/query".format(self._ip)
+        strSeries = ",".join(sensor_names)
+        url = url + f"?select=[time.iso,{strSeries}]&begin=s-{timespan}s&end=s&group={timespan}s"
+        return await self._connection.get(url, self._username, self._password)
