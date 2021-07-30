@@ -76,31 +76,33 @@ class Iotawatt:
         _LOGGER.debug("Query: %s", query)
 
         for i in range(len(inputs)):
-            channel_name = inputs[i]['channel']
-            _LOGGER.debug("In: Channel: %s - Name: %s", channel_name, query['series'][i]['name'])
+            channel_nbr = inputs[i]['channel']
+            _LOGGER.debug("In: Channel: %s - Name: %s", channel_nbr, query['series'][i]['name'])
 
-            channel_input_name = "input_" + str(channel_name)
+            channel_input_name = "input_" + str(channel_nbr)
+            channel_unit = query['series'][i]['unit']
             if channel_input_name not in sensors:
                 # Sensor doesn't exist yet, create it.
                 _LOGGER.debug("In: Creating Channel sensor %s", channel_input_name)
-                sensors[channel_input_name] = Sensor(channel_name, query['series'][i]['name'], "Input", query['series'][i]['unit'], None, self._macAddress)
+                sensors[channel_input_name] = Sensor(channel_nbr, query['series'][i]['name'], "Input", channel_unit, None, self._macAddress)
             else:
                 inputsensor = sensors[channel_input_name]
                 inputsensor.setName(query['series'][i]['name'])
-                inputsensor.setUnit(query['series'][i]['unit'])
+                inputsensor.setUnit(channel_unit)
                 inputsensor.setSensorID(self._macAddress)
 
         for i in range(len(outputs)):
-            channel_name = inputs[i]['channel']
-            _LOGGER.debug("Out: Name: %s", outputs[i]['name'])
+            channel_name = str(outputs[i]['name'])
+            _LOGGER.debug("Out: Name: %s", channel_name)
 
             channel_output_name = "output_" + str(channel_name)
+            channel_unit = query['series'][i]['unit']
             if channel_output_name not in sensors:
                 _LOGGER.debug("Out: Creating Channel sensor %s", channel_output_name)
-                sensors[channel_output_name] = Sensor("N/A", outputs[i]['name'], "Output", outputs[i]['units'], None, self._macAddress)
+                sensors[channel_output_name] = Sensor("N/A", channel_name, "Output", channel_unit, None, self._macAddress)
             else:
                 outputsensor = sensors[channel_output_name]
-                outputsensor.setUnit(outputs[i]['units'])
+                outputsensor.setUnit(channel_unit)
                 outputsensor.setSensorID(self._macAddress)
 
 
