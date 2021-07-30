@@ -75,43 +75,46 @@ class Iotawatt:
         query = json.loads(query)
         _LOGGER.debug("Query: %s", query)
 
-        sensors_query_names = []
-        for s in range(len(query['series'])):
-            sensors_query_names.append(query['series'][s]['name'])
-        _LOGGER.debug("Sen: %s", sensors_query_names)
-        response = await self._getQuerySelectSeriesCurrent(sensors_query_names, timespan)
-        values = json.loads(response.text)
-        _LOGGER.debug("Val: %s", values)
-
         for i in range(len(inputs)):
             channel_name = inputs[i]['channel']
-            _LOGGER.debug("In: Channel: %s - Name: %s - Value: %s %s", channel_name, query['series'][i]['name'], values[0][i+1], query['series'][i]['unit'])
+            _LOGGER.debug("In: Channel: %s - Name: %s", channel_name, query['series'][i]['name'])
 
             channel_input_name = "input_" + str(channel_name)
             if channel_input_name not in sensors:
                 # Sensor doesn't exist yet, create it.
                 _LOGGER.debug("In: Creating Channel sensor %s", channel_input_name)
-                sensors[channel_input_name] = Sensor(channel_name, query['series'][i]['name'], "Input", query['series'][i]['unit'], values[0][i+1], self._macAddress)
+                sensors[channel_input_name] = Sensor(channel_name, query['series'][i]['name'], "Input", query['series'][i]['unit'], None, self._macAddress)
             else:
                 inputsensor = sensors[channel_input_name]
                 inputsensor.setName(query['series'][i]['name'])
                 inputsensor.setUnit(query['series'][i]['unit'])
-                inputsensor.setValue(values[0][i+1])
                 inputsensor.setSensorID(self._macAddress)
 
         for i in range(len(outputs)):
             channel_name = inputs[i]['channel']
-            _LOGGER.debug("Out: Name: %s - Value: %s %s", outputs[i]['name'], outputs[i]['units'], outputs[i]['value'])
+            _LOGGER.debug("Out: Name: %s", outputs[i]['name'])
 
             channel_output_name = "output_" + str(channel_name)
             if channel_output_name not in sensors:
                 _LOGGER.debug("Out: Creating Channel sensor %s", channel_output_name)
-                sensors[channel_output_name] = Sensor("N/A", outputs[i]['name'], "Output", outputs[i]['units'], outputs[i]['value'], self._macAddress)
+                sensors[channel_output_name] = Sensor("N/A", outputs[i]['name'], "Output", outputs[i]['units'], None, self._macAddress)
             else:
                 outputsensor = sensors[channel_output_name]
                 outputsensor.setUnit(outputs[i]['units'])
-                outputsensor.setValue(outputs[i]['value'])
                 outputsensor.setSensorID(self._macAddress)
+
+
+        sensors_query_names = [ sensor.getName() for sensor in sensors.values() ]
+        _LOGGER.debug("Sen: %s", sensors_query_names)
+        response = await self._getQuerySelectSeriesCurrent(sensors_query_names, timespan)
+        values = json.loads(response.text)
+        _LOGGER.debug("Val: %s", values)
+
+        # Update values, get item according to index from query
+        for sensor in sensors.values():
+            idx = sensors_query_names.index(sensor.getName())
+            sensor.setValue(values[0][idx])
+
 
     async def _getQueryShowSeries(self):
         url = "http://{}/query?show=series".format(self._ip)
@@ -126,5 +129,5 @@ class Iotawatt:
         """
         url = "http://{}/query".format(self._ip)
         strSeries = ",".join(sensor_names)
-        url = url + f"?select=[time.iso,{strSeries}]&begin=s-{timespan}s&end=s&group={timespan}s"
+        url = url + f"?select=[{strSeries}]&begin=s-{timespan}s&end=s&group={timespan}s"
         return await self._connection.get(url, self._username, self._password)
