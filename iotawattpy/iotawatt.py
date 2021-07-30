@@ -70,6 +70,15 @@ class Iotawatt:
             sensor.setUnit(unit)
             sensor.setSensorID(self._macAddress)
 
+    def _createOrUpdateSensorSet(self, sensors, entity, channel_nbr, name, type, unit):
+        self._createOrUpdateSensor(sensors, entity, channel_nbr, name, type, unit)
+
+        # Also add Energy sensors (the integral of Power) for all Power sensors
+        if unit == "Watts":
+            entity = entity + "_energy"
+            name = name + ".wh"
+            self._createOrUpdateSensor(sensors, entity, channel_nbr, name, type, "WattHours")
+
 
     async def _refreshSensors(self, timespan):
         sensors = self._sensors['sensors']
@@ -92,8 +101,7 @@ class Iotawatt:
 
             channel_input_name = "input_" + str(channel_nbr)
             channel_unit = query['series'][i]['unit']
-            self._createOrUpdateSensor(sensors, channel_input_name, channel_nbr, query['series'][i]['name'], "Input", channel_unit)
-
+            self._createOrUpdateSensorSet(sensors, channel_input_name, channel_nbr, query['series'][i]['name'], "Input", channel_unit)
 
         for i in range(len(outputs)):
             channel_name = str(outputs[i]['name'])
@@ -101,19 +109,40 @@ class Iotawatt:
 
             channel_output_name = "output_" + str(channel_name)
             channel_unit = query['series'][i]['unit']
-            self._createOrUpdateSensor(sensors, channel_output_name, "N/A", channel_name, "Output", channel_unit)
+            self._createOrUpdateSensorSet(sensors, channel_output_name, "N/A", channel_name, "Output", channel_unit)
 
+        # Update all entities, query depending on Unit
+        current_query_entities = []
+        integrated_query_entities = []
+        for entity, sensor in sensors.items():
+            if sensor.getUnit() == "WattHours":
+                integrated_query_entities.append(entity)
+            else:
+                current_query_entities.append(entity)
 
-        sensors_query_names = [ sensor.getName() for sensor in sensors.values() ]
-        _LOGGER.debug("Sen: %s", sensors_query_names)
-        response = await self._getQuerySelectSeriesCurrent(sensors_query_names, timespan)
+        # Current (as in right now) measurements
+        current_query_names = [ sensors[entity].getName() for entity in current_query_entities ]
+        _LOGGER.debug("Sen: %s", current_query_names)
+        response = await self._getQuerySelectSeriesCurrent(current_query_names, timespan)
         values = json.loads(response.text)
         _LOGGER.debug("Val: %s", values)
 
-        # Update values, get item according to index from query
-        for sensor in sensors.values():
-            idx = sensors_query_names.index(sensor.getName())
+        # We can assume the same index for current_query_entities/current_query_names
+        for idx in range(len(current_query_names)):
+            sensor = sensors[current_query_entities[idx]]
             sensor.setValue(values[0][idx])
+
+        # Integrated (as in integral) measurements
+        integrated_query_names = [ sensors[entity].getName() for entity in integrated_query_entities ]
+        _LOGGER.debug("Sen: %s", integrated_query_names)
+        response = await self._getQuerySelectSeriesIntegrate(integrated_query_names, "y")
+        values = json.loads(response.text)
+        _LOGGER.debug("Val: %s", values)
+
+        # We can assume the same index for integrated_query_entities/integrated_query_names
+        for idx in range(len(integrated_query_names)):
+            sensor = sensors[integrated_query_entities[idx]]
+            sensor.setValue(values[0][idx+1])
 
 
     async def _getQueryShowSeries(self):
@@ -130,4 +159,24 @@ class Iotawatt:
         url = "http://{}/query".format(self._ip)
         strSeries = ",".join(sensor_names)
         url = url + f"?select=[{strSeries}]&begin=s-{timespan}s&end=s&group={timespan}s"
+        _LOGGER.debug("Querying with URL %s", url)
         return await self._connection.get(url, self._username, self._password)
+
+
+    async def _getQuerySelectSeriesIntegrate(self, sensor_names, start):
+        """Get integrated (summed) values using Query API.
+
+        @param: sensor_names List of sensors
+        @param: start Start time. ISO dates are supported. the following characters can be used as well:
+        - y - Jan 1, of the current year
+        - M - The first day of the current month
+        - w - The first day of the current week (weeks start on Sunday)
+        - d - The current day
+        See also:https://docs.iotawatt.com/en/02_06_03/query.html#relative-time
+        """
+        url = "http://{}/query".format(self._ip)
+        strSeries = ",".join(sensor_names)
+        url = url + f"?select=[time.iso,{strSeries}]&begin={start}&end=s&group=all"
+        _LOGGER.debug("Querying with URL %s", url)
+        return await self._connection.get(url, self._username, self._password)
+
