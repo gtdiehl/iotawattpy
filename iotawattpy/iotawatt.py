@@ -51,7 +51,7 @@ class Iotawatt:
 
     """Retrieves sensor data and updates the Sensor objects"""
     async def update(self, timespan=30):
-        await self._createSensors(timespan)
+        await self._refreshSensors(timespan)
 
     """Private helper functions"""
 
@@ -60,7 +60,18 @@ class Iotawatt:
         url = "http://{}/status?inputs=yes&outputs=yes".format(self._ip)
         return await self._connection.get(url, self._username, self._password)
 
-    async def _createSensors(self, timespan):
+    def _createOrUpdateSensor(self, sensors, entity, channel_nbr, name, type, unit):
+        if entity not in sensors:
+            _LOGGER.debug("%s: Creating Channel sensor %s", type, entity)
+            sensors[entity] = Sensor(channel_nbr, name, type, unit, None, self._macAddress)
+        else:
+            sensor = sensors[entity]
+            sensor.setName(name)
+            sensor.setUnit(unit)
+            sensor.setSensorID(self._macAddress)
+
+
+    async def _refreshSensors(self, timespan):
         sensors = self._sensors['sensors']
 
         response = await self._getInputsandOutputs()
@@ -81,15 +92,8 @@ class Iotawatt:
 
             channel_input_name = "input_" + str(channel_nbr)
             channel_unit = query['series'][i]['unit']
-            if channel_input_name not in sensors:
-                # Sensor doesn't exist yet, create it.
-                _LOGGER.debug("In: Creating Channel sensor %s", channel_input_name)
-                sensors[channel_input_name] = Sensor(channel_nbr, query['series'][i]['name'], "Input", channel_unit, None, self._macAddress)
-            else:
-                inputsensor = sensors[channel_input_name]
-                inputsensor.setName(query['series'][i]['name'])
-                inputsensor.setUnit(channel_unit)
-                inputsensor.setSensorID(self._macAddress)
+            self._createOrUpdateSensor(sensors, channel_input_name, channel_nbr, query['series'][i]['name'], "Input", channel_unit)
+
 
         for i in range(len(outputs)):
             channel_name = str(outputs[i]['name'])
@@ -97,13 +101,7 @@ class Iotawatt:
 
             channel_output_name = "output_" + str(channel_name)
             channel_unit = query['series'][i]['unit']
-            if channel_output_name not in sensors:
-                _LOGGER.debug("Out: Creating Channel sensor %s", channel_output_name)
-                sensors[channel_output_name] = Sensor("N/A", channel_name, "Output", channel_unit, None, self._macAddress)
-            else:
-                outputsensor = sensors[channel_output_name]
-                outputsensor.setUnit(channel_unit)
-                outputsensor.setSensorID(self._macAddress)
+            self._createOrUpdateSensor(sensors, channel_output_name, "N/A", channel_name, "Output", channel_unit)
 
 
         sensors_query_names = [ sensor.getName() for sensor in sensors.values() ]
