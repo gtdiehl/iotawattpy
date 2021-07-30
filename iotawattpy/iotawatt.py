@@ -61,8 +61,8 @@ class Iotawatt:
         return await self._connection.get(url, self._username, self._password)
 
     async def _createSensors(self):
-        self._sensors = {}
-        self._sensors['sensors'] = {}
+        sensors = self._sensors['sensors']
+
         response = await self._getInputsandOutputs()
         results = response.text
         results = json.loads(results)
@@ -75,34 +75,41 @@ class Iotawatt:
         query = json.loads(query)
         _LOGGER.debug("Query: %s", query)
 
-        sensors = []
+        sensors_query_names = []
         for s in range(len(query['series'])):
-            sensors.append(query['series'][s]['name'])
-        _LOGGER.debug("Sen: %s", sensors)
-        values = await self._getQuerySelectSeries(sensors)
+            sensors_query_names.append(query['series'][s]['name'])
+        _LOGGER.debug("Sen: %s", sensors_query_names)
+        values = await self._getQuerySelectSeries(sensors_query_names)
         values = values.text
         values = json.loads(values)
         _LOGGER.debug("Val: %s", values)
 
         for i in range(len(inputs)):
-            _LOGGER.debug("In: Channel: %s - Name: %s - Value: %s %s", inputs[i]['channel'], query['series'][i]['name'], values[0][i+1], query['series'][i]['unit'])
+            channel_name = inputs[i]['channel']
+            _LOGGER.debug("In: Channel: %s - Name: %s - Value: %s %s", channel_name, query['series'][i]['name'], values[0][i+1], query['series'][i]['unit'])
 
-            if self._sensors['sensors'].get("input_" + str(inputs[i]['channel']), None) is None:
-                self._sensors['sensors']["input_" + str(inputs[i]['channel'])] = Sensor(inputs[i]['channel'], query['series'][i]['name'], "Input", query['series'][i]['unit'], values[0][i+1], self._macAddress)
+            channel_input_name = "input_" + str(channel_name)
+            if channel_input_name not in sensors:
+                # Sensor doesn't exist yet, create it.
+                _LOGGER.debug("In: Creating Channel sensor %s", channel_input_name)
+                sensors[channel_input_name] = Sensor(channel_name, query['series'][i]['name'], "Input", query['series'][i]['unit'], values[0][i+1], self._macAddress)
             else:
-                inputsensor = self._sensors['sensors'].get("input_" + str(inputs[i]['channel']))
+                inputsensor = sensors[channel_input_name]
                 inputsensor.setName(query['series'][i]['name'])
                 inputsensor.setUnit(query['series'][i]['unit'])
                 inputsensor.setValue(values[0][i+1])
                 inputsensor.setSensorID(self._macAddress)
 
         for i in range(len(outputs)):
+            channel_name = inputs[i]['channel']
             _LOGGER.debug("Out: Name: %s - Value: %s %s", outputs[i]['name'], outputs[i]['units'], outputs[i]['value'])
 
-            if self._sensors['sensors'].get("output_" + str(outputs[i]['name']), None) is None:
-                self._sensors['sensors']["output_" + str(outputs[i]['name'])] = Sensor("N/A", outputs[i]['name'], "Output", outputs[i]['units'], outputs[i]['value'], self._macAddress)
+            channel_output_name = "output_" + str(channel_name)
+            if channel_output_name not in sensors:
+                _LOGGER.debug("Out: Creating Channel sensor %s", channel_output_name)
+                sensors[channel_output_name] = Sensor("N/A", outputs[i]['name'], "Output", outputs[i]['units'], outputs[i]['value'], self._macAddress)
             else:
-                outputsensor = self._sensors['sensors'].get("output_" + str(outputs[i]['name']))
+                outputsensor = sensors[channel_output_name]
                 outputsensor.setUnit(outputs[i]['units'])
                 outputsensor.setValue(outputs[i]['value'])
                 outputsensor.setSensorID(self._macAddress)
