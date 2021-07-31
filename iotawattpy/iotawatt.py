@@ -63,7 +63,7 @@ class Iotawatt:
     def _createOrUpdateSensor(self, sensors, entity, channel_nbr, name, type, unit):
         if entity not in sensors:
             _LOGGER.debug("%s: Creating Channel sensor %s", type, entity)
-            sensors[entity] = Sensor(channel_nbr, name, type, unit, None, self._macAddress)
+            sensors[entity] = Sensor(channel_nbr, name, type, unit, None, None, self._macAddress)
         else:
             sensor = sensors[entity]
             sensor.setName(name)
@@ -143,6 +143,7 @@ class Iotawatt:
         for idx in range(len(integrated_query_names)):
             sensor = sensors[integrated_query_entities[idx]]
             sensor.setValue(values[0][idx+1])
+            sensor.setBegin(values[0][0])
 
 
     async def _getQueryShowSeries(self):

@@ -4,12 +4,13 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Sensor:
-    def __init__(self, channel, name, io_type, unit, value, mac_addr):
+    def __init__(self, channel, name, io_type, unit, value, begin, mac_addr):
         self._channel = channel
         self._name = name
         self._type = io_type
         self._unit = unit
         self._value = value
+        self._begin = begin
         self._sensor_id = None
 
         self.hub_mac_address = mac_addr
@@ -33,7 +34,7 @@ class Sensor:
 
     def setName(self, name):
         self._name = name
-        
+
     def getType(self):
         return self._type
 
@@ -51,3 +52,9 @@ class Sensor:
 
     def setValue(self, value):
         self._value = value
+
+    def getBegin(self):
+        return self._begin
+
+    def setBegin(self, begin):
+        self._begin = begin
