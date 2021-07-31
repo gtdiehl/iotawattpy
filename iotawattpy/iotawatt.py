@@ -108,7 +108,7 @@ class Iotawatt:
             _LOGGER.debug("Out: Name: %s", channel_name)
 
             channel_output_name = "output_" + str(channel_name)
-            channel_unit = query['series'][i]['unit']
+            channel_unit = outputs[i]['units']
             self._createOrUpdateSensorSet(sensors, channel_output_name, "N/A", channel_name, "Output", channel_unit)
 
         # Update all entities, query depending on Unit
