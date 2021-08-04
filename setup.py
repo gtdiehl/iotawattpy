@@ -19,7 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "httpx==0.16.1"
+        "httpx>=0.16.1"
     ],
     python_requires='>=3.8',
 )
