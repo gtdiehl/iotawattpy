@@ -6,13 +6,23 @@ import httpx
 from .connection import Connection
 from .sensor import Sensor
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 class Iotawatt:
 
     """Creates an Iotawatt object that represents the physical hardware"""
+
     """with sensors connected to it"""
-    def __init__(self, device_name, ip, websession: httpx.AsyncClient, username=None, password=None):
+
+    def __init__(
+        self,
+        device_name,
+        ip,
+        websession: httpx.AsyncClient,
+        username=None,
+        password=None,
+    ):
         self._device_name = device_name
         self._ip = ip
         self._connection = Connection(websession, self._ip)
@@ -20,11 +30,12 @@ class Iotawatt:
         self._password = password
 
         self._sensors = {}
-        self._sensors['sensors'] = {}
+        self._sensors["sensors"] = {}
 
         self._macAddress = ""
 
     """If Authentication is enabled, test the connection"""
+
     async def connect(self):
         url = "http://{}/status?wifi=yes".format(self._ip)
         results = await self._connection.get(url, self._username, self._password)
@@ -35,8 +46,8 @@ class Iotawatt:
                 raise
 
             try:
-                self._macAddress = jsonResults['wifi']['mac'].replace(':', '')
-                _LOGGER.debug("MAC: %s", self._macAddress)
+                self._macAddress = jsonResults["wifi"]["mac"].replace(":", "")
+                LOGGER.debug("MAC: %s", self._macAddress)
             except KeyError:
                 raise
             return True
@@ -46,6 +57,7 @@ class Iotawatt:
             results.raise_for_status()
 
     """Returns an array of Sensor objects"""
+
     def getSensors(self):
         return self._sensors
 
@@ -56,13 +68,14 @@ class Iotawatt:
     """Private helper functions"""
 
     """Retrieves list of Inputs and Outputs and associated Status from the IoTaWatt"""
+
     async def _getInputsandOutputs(self):
         url = "http://{}/status?inputs=yes&outputs=yes".format(self._ip)
         return await self._connection.get(url, self._username, self._password)
 
     def _createOrUpdateSensor(self, sensors, entity, channel_nbr, name, type, unit):
         if entity not in sensors:
-            _LOGGER.debug("%s: Creating Channel sensor %s", type, entity)
+            LOGGER.debug("%s: Creating Channel sensor %s", type, entity)
             sensors[entity] = Sensor(channel_nbr, name, type, unit, None, None, self._macAddress)
         else:
             sensor = sensors[entity]
@@ -86,18 +99,18 @@ class Iotawatt:
         response = await self._getInputsandOutputs()
         results = response.text
         results = json.loads(results)
-        _LOGGER.debug("IOResults: %s", results)
+        LOGGER.debug("IOResults: %s", results)
         inputs = results['inputs']
         outputs = results['outputs']
 
         query = await self._getQueryShowSeries()
         query = query.text
         query = json.loads(query)
-        _LOGGER.debug("Query: %s", query)
+        LOGGER.debug("Query: %s", query)
 
         for i in range(len(inputs)):
             channel_nbr = inputs[i]['channel']
-            _LOGGER.debug("In: Channel: %s - Name: %s", channel_nbr, query['series'][i]['name'])
+            LOGGER.debug("In: Channel: %s - Name: %s", channel_nbr, query['series'][i]['name'])
 
             channel_input_name = "input_" + str(channel_nbr)
             channel_unit = query['series'][i]['unit']
@@ -105,7 +118,7 @@ class Iotawatt:
 
         for i in range(len(outputs)):
             channel_name = str(outputs[i]['name'])
-            _LOGGER.debug("Out: Name: %s", channel_name)
+            LOGGER.debug("Out: Name: %s", channel_name)
 
             channel_output_name = "output_" + str(channel_name)
             channel_unit = outputs[i]['units']
@@ -122,10 +135,10 @@ class Iotawatt:
 
         # Current (as in right now) measurements
         current_query_names = [ sensors[entity].getName() for entity in current_query_entities ]
-        _LOGGER.debug("Sen: %s", current_query_names)
+        LOGGER.debug("Sen: %s", current_query_names)
         response = await self._getQuerySelectSeriesCurrent(current_query_names, timespan)
         values = json.loads(response.text)
-        _LOGGER.debug("Val: %s", values)
+        LOGGER.debug("Val: %s", values)
 
         # We can assume the same index for current_query_entities/current_query_names
         for idx in range(len(current_query_names)):
@@ -134,10 +147,10 @@ class Iotawatt:
 
         # Integrated (as in integral) measurements
         integrated_query_names = [ sensors[entity].getName() for entity in integrated_query_entities ]
-        _LOGGER.debug("Sen: %s", integrated_query_names)
+        LOGGER.debug("Sen: %s", integrated_query_names)
         response = await self._getQuerySelectSeriesIntegrate(integrated_query_names, "y")
         values = json.loads(response.text)
-        _LOGGER.debug("Val: %s", values)
+        LOGGER.debug("Val: %s", values)
 
         # We can assume the same index for integrated_query_entities/integrated_query_names
         for idx in range(len(integrated_query_names)):
@@ -148,7 +161,7 @@ class Iotawatt:
 
     async def _getQueryShowSeries(self):
         url = "http://{}/query?show=series".format(self._ip)
-        _LOGGER.debug("URL: %s", url)
+        LOGGER.debug("URL: %s", url)
         return await self._connection.get(url, self._username, self._password)
 
     async def _getQuerySelectSeriesCurrent(self, sensor_names, timespan):
@@ -160,7 +173,7 @@ class Iotawatt:
         url = "http://{}/query".format(self._ip)
         strSeries = ",".join(sensor_names)
         url = url + f"?select=[{strSeries}]&begin=s-{timespan}s&end=s&group={timespan}s"
-        _LOGGER.debug("Querying with URL %s", url)
+        LOGGER.debug("Querying with URL %s", url)
         return await self._connection.get(url, self._username, self._password)
 
 
@@ -178,6 +191,6 @@ class Iotawatt:
         url = "http://{}/query".format(self._ip)
         strSeries = ",".join(sensor_names)
         url = url + f"?select=[time.iso,{strSeries}]&begin={start}&end=s&group=all"
-        _LOGGER.debug("Querying with URL %s", url)
+        LOGGER.debug("Querying with URL %s", url)
         return await self._connection.get(url, self._username, self._password)
 
