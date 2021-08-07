@@ -124,6 +124,33 @@ class Iotawatt:
             channel_unit = outputs[i]['units']
             self._createOrUpdateSensorSet(sensors, channel_output_name, "N/A", channel_name, "Output", channel_unit)
 
+        # Check and remove a sensor if it exists in memory but not from the query
+        keys_to_be_removed = []
+        LOGGER.debug("SensorKeys: %s", sensors.items())
+        for entity, sensor in sensors.items():
+            flag = False
+            for i in range(len(query['series'])):
+                if sensor.getUnit() == "WattHours":
+                    queryName = query['series'][i]['name'] + ".wh"
+                else:
+                    queryName = query['series'][i]['name']
+                LOGGER.debug("Compare: %s - %s", sensor.getName(), queryName)
+                if sensor.getName() == queryName:
+                    flag = True
+                    break
+                else:
+                    continue
+            if not flag:
+                LOGGER.debug("Not Found: %s - %s", queryName, sensor.getName())
+                LOGGER.debug("Adding to be removed: %s", entity)
+                keys_to_be_removed.append(entity)
+
+        if len(keys_to_be_removed) > 0:        
+            for k in keys_to_be_removed:
+                sensors.pop(k)
+            LOGGER.debug("Check entity(s) removed: %s", sensors.items())
+        
+
         # Update all entities, query depending on Unit
         current_query_entities = []
         integrated_query_entities = []
