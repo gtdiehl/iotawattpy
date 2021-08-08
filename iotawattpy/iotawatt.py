@@ -88,7 +88,7 @@ class Iotawatt:
 
         # Also add Energy sensors (the integral of Power) for all Power sensors
         if unit == "Watts":
-            entity = entity + "_energy"
+            #entity = entity + "_energy"
             name = name + ".wh"
             self._createOrUpdateSensor(sensors, entity, channel_nbr, name, type, "WattHours")
 
