@@ -134,7 +134,6 @@ class Iotawatt:
                     queryName = query['series'][i]['name'] + ".wh"
                 else:
                     queryName = query['series'][i]['name']
-                LOGGER.debug("Compare: %s - %s", sensor.getName(), queryName)
                 if sensor.getName() == queryName:
                     flag = True
                     break
