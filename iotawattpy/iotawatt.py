@@ -69,11 +69,11 @@ class Iotawatt:
 
     """Retrieves sensor data and updates the Sensor objects"""
 
-    async def update(self, timespan=30):
+    async def update(self, timespan=30, lastUpdate=None):
         if not self._getMACFlag:
             await self.connect()
             self._getMACFlag = True
-        await self._refreshSensors(timespan)
+        await self._refreshSensors(timespan, lastUpdate)
 
     """Retrieve the last update time"""
 
@@ -147,7 +147,7 @@ class Iotawatt:
                 suffix="wh",
             )
 
-    async def _refreshSensors(self, timespan):
+    async def _refreshSensors(self, timespan, lastUpdate):
         sensors = self._sensors["sensors"]
 
         response = await self._getInputsandOutputs()
@@ -279,11 +279,12 @@ class Iotawatt:
         diff = seconds - 30 if seconds >= 30 else seconds
         now -= timedelta(seconds=diff, microseconds=now.microsecond)
 
-        lastUpdate = (
-            now - timedelta(seconds=timespan)
-            if self._lastUpdateTime is None
-            else self._lastUpdateTime
-        )
+        if lastUpdate is None:
+            lastUpdate = (
+                now - timedelta(seconds=timespan)
+                if self._lastUpdateTime is None
+                else self._lastUpdateTime
+            )
         LOGGER.debug(
             f"Querying energy at {now.isoformat()} for the past {(now-lastUpdate).seconds}"
         )
