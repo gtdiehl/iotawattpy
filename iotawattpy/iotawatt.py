@@ -161,7 +161,9 @@ class Iotawatt:
                 current_query_entities.append(entity)
 
         # Current (as in right now) measurements
-        current_query_names = [ sensors[entity].getName() for entity in current_query_entities ]
+        current_query_names = []
+        for entity in current_query_entities:
+            current_query_names.append(f"{sensors[entity].getName()}.{sensors[entity].getUnit().lower()}")
         LOGGER.debug("Sen: %s", current_query_names)
         response = await self._getQuerySelectSeriesCurrent(current_query_names, timespan)
         values = json.loads(response.text)
