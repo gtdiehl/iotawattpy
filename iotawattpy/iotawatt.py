@@ -63,6 +63,7 @@ class Iotawatt:
 
     """Retrieves sensor data and updates the Sensor objects"""
     async def update(self, timespan=30):
+        await self.connect()
         await self._refreshSensors(timespan)
 
     """Private helper functions"""
