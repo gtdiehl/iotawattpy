@@ -33,6 +33,7 @@ class Iotawatt:
         self._sensors["sensors"] = {}
 
         self._macAddress = ""
+        self._getMACFlag = False
 
     """If Authentication is enabled, test the connection"""
 
@@ -63,7 +64,9 @@ class Iotawatt:
 
     """Retrieves sensor data and updates the Sensor objects"""
     async def update(self, timespan=30):
-        await self.connect()
+        if not self._getMACFlag:
+            await self.connect()
+            self._getMACFlag = True
         await self._refreshSensors(timespan)
 
     """Private helper functions"""
