@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="iotawattpy",
-    version="0.0.9",
+    version="0.1.0",
     author="Greg Diehl",
     author_email="greg.diehl.gtd@gmail.com",
     description="Python library for the IoTaWatt Energy device",
@@ -18,8 +18,6 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: OS Independent",
     ],
-    install_requires=[
-        "httpx>=0.16.1"
-    ],
-    python_requires='>=3.8',
+    install_requires=["httpx>=0.16.1"],
+    python_requires=">=3.8",
 )

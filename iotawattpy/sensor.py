@@ -4,14 +4,27 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Sensor:
-    def __init__(self, channel, name, io_type, unit, value, begin, mac_addr):
+    def __init__(
+        self,
+        channel,
+        base_name,
+        suffix,
+        io_type,
+        unit,
+        value,
+        begin,
+        mac_addr,
+        fromStart=False,
+    ):
         self._channel = channel
-        self._name = name
+        self._base_name = base_name
+        self._suffix = suffix
         self._type = io_type
         self._unit = unit
         self._value = value
         self._begin = begin
         self._sensor_id = None
+        self._fromStart = fromStart
 
         self.hub_mac_address = mac_addr
 
@@ -27,13 +40,25 @@ class Sensor:
         return self._sensor_id
 
     def setSensorID(self, hub_mac_address):
-        self._sensor_id = hub_mac_address + "_" + self._type + "_" + self._name
+        self._sensor_id = hub_mac_address + "_" + self._type + "_" + self.getName()
+
+    def getSourceName(self):
+        return self._base_name + (f"{self._suffix}" if self._suffix != None else "")
 
     def getName(self):
-        return self._name
+        return self.getSourceName() + ("_last" if self._suffix == ".wh" and not self._fromStart else "")
 
-    def setName(self, name):
-        self._name = name
+    def getBaseName(self):
+        return self._base_name
+
+    def setBaseName(self, base_name):
+        self._base_name = base_name
+
+    def getSuffix(self):
+        return self._suffix
+
+    def setSuffix(self, suffix):
+        self._suffix = suffix
 
     def getType(self):
         return self._type
@@ -58,3 +83,9 @@ class Sensor:
 
     def setBegin(self, begin):
         self._begin = begin
+
+    def getFromStart(self):
+        return self._fromStart
+
+    def setFromStart(self, fromStart):
+        self._fromStart = fromStart
