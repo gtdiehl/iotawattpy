@@ -96,7 +96,7 @@ class Iotawatt:
         base_name,
         type,
         unit,
-        suffix="",
+        suffix=None,
         fromStart=False,
     ):
         if entity not in sensors:
@@ -134,7 +134,7 @@ class Iotawatt:
                 base_name,
                 type,
                 "WattHours",
-                suffix="wh",
+                suffix=".wh",
                 fromStart=True,
             )
             self._createOrUpdateSensor(
@@ -144,7 +144,7 @@ class Iotawatt:
                 base_name,
                 type,
                 "WattHours",
-                suffix="wh",
+                suffix=".wh",
             )
 
     async def _refreshSensors(self, timespan, lastUpdate):
@@ -169,7 +169,7 @@ class Iotawatt:
             flag = False
             for i in range(len(query["series"])):
                 queryName = query["series"][i]["name"]
-                LOGGER.debug("Compare: %s - %s", sensor.getName(), queryName)
+                LOGGER.debug("Compare: %s (base:%s) - %s", sensor.getName(), sensor.getBaseName(), queryName)
                 if sensor.getBaseName() == queryName:
                     flag = True
                     break
@@ -233,7 +233,7 @@ class Iotawatt:
         current_query_names = []
         for entity in current_query_entities:
             current_query_names.append(
-                f"{sensors[entity].getName()}.{sensors[entity].getUnit().lower()}"
+                f"{sensors[entity].getSourceName()}.{sensors[entity].getUnit().lower()}"
             )
         LOGGER.debug("Sen: %s", current_query_names)
         response = await self._getQuerySelectSeriesCurrent(
@@ -249,7 +249,7 @@ class Iotawatt:
 
         # Integrated (as in integral) measurements since beginning of period
         integrated_total_query_names = [
-            sensors[entity].getName() for entity in integrated_total_query_entities
+            sensors[entity].getSourceName() for entity in integrated_total_query_entities
         ]
         LOGGER.debug("Sen: %s", integrated_total_query_names)
         response = await self._getQuerySelectSeriesIntegrate(
@@ -266,7 +266,7 @@ class Iotawatt:
 
         # Integrated (as in integral) measurements since last querie of period
         integrated_query_names = [
-            sensors[entity].getName() for entity in integrated_query_entities
+            sensors[entity].getSourceName() for entity in integrated_query_entities
         ]
         LOGGER.debug("Sen: %s", integrated_total_query_names)
         # The iotawatt only know how to deal with either local timezone and UTC timezone.
