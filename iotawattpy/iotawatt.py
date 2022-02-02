@@ -151,6 +151,9 @@ class Iotawatt:
         sensors = self._sensors["sensors"]
 
         response = await self._getInputsandOutputs()
+        if response is None:
+            LOGGER.warn("Received None for inputs and outputs")
+            return
         results = response.text
         results = json.loads(results)
         LOGGER.debug("IOResults: %s", results)
@@ -158,6 +161,9 @@ class Iotawatt:
         outputs = results["outputs"]
 
         query = await self._getQueryShowSeries()
+        if query is None:
+            LOGGER.warn("Received None for query")
+            return
         query = query.text
         query = json.loads(query)
         LOGGER.debug("Query: %s", query)
