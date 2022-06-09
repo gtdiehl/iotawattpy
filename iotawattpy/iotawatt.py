@@ -80,6 +80,18 @@ class Iotawatt:
     def getLastUpdateTime(self):
         return self._lastUpdateTime
 
+    """Retrieves the configuration from the IoTaWatt"""
+
+    async def getConfiguration(self):
+        url = "http://{}/config.txt".format(self._ip)
+        response = await self._connection.get(url, self._username, self._password)
+        if response.status_code != httpx.codes.OK:
+            results.raise_for_status()
+
+        results = response.text
+        results = json.loads(results)
+        return results
+
     """Private helper functions"""
 
     """Retrieves list of Inputs and Outputs and associated Status from the IoTaWatt"""
