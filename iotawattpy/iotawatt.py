@@ -274,9 +274,10 @@ class Iotawatt:
         # incorrect result. As a workaround, we use UTC.
         now = datetime.now(tz=timezone.utc)
 
-        # The iotawatt only supports rounded seconds. We also ound to the nearest 30s
+        # The iotawatt only supports rounded seconds. We also round to the nearest 5s,
+        # iotawatt's measurement interval.
         seconds = now.second
-        diff = seconds - 30 if seconds >= 30 else seconds
+        diff = seconds % 5
         now -= timedelta(seconds=diff, microseconds=now.microsecond)
 
         if lastUpdate is None:
